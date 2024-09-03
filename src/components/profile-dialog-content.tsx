@@ -12,7 +12,7 @@ import {
 import z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { UserButton, useUser } from "@clerk/clerk-react";
@@ -61,14 +61,13 @@ const addFriendFormSchema = z.object({
 const ProfileDialogContent = () => {
   const [updateStatusDialog, setUpdateStatusDialog] = useState(false);
   const [status, setStatus] = useState("");
-  const [friendReqestModal, setFriendRequestModal] = useState(false);
+  const [friendRequestModal, setFriendRequestModal] = useState(false);
   const { setTheme } = useTheme();
   const { mutate: createFriendRequest, state: createFriendRequestState } =
     useMutationHandler(api.friend_request.create);
   const friendRequests = useQuery(api.friend_requests.get);
 
   const { user } = useUser();
-
   const userDetails = useQuery(api.status.get, { clerkId: user?.id! });
   const { mutate: updateStatus, state: updateStatusState } = useMutationHandler(
     api.status.update
@@ -111,6 +110,28 @@ const ProfileDialogContent = () => {
     }
   }
 
+  const [clickCount, setClickCount] = useState(0);
+  const timerRef = useRef<number | null>(null);
+
+  const handleClick = () => {
+    setClickCount((prevCount) => prevCount + 1);
+
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+
+    timerRef.current = window.setTimeout(() => {
+      if (clickCount === 1) {
+        // Single click action
+        console.log("Single click action");
+      } else if (clickCount === 2) {
+        // Double click action
+        console.log("Double click action");
+      }
+      setClickCount(0);
+    }, 200); // Adjust delay as needed
+  };
+
   return (
     <div>
       <Card className="border-0 flex flex-col space-y-4">
@@ -139,36 +160,38 @@ const ProfileDialogContent = () => {
 
         <div className="flex items-center justify-center space-x-5">
           <p>Manage your account</p>
-          <UserButton
-            appearance={{
-              elements: {
-                userButtonPopoverCard: {
-                  pointerEvents: "initial",
-                  transition:
-                    "transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease",
-                  transform: "scale(1)",
-                  boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
-                  border: "2px solid transparent",
-                  backdropFilter: "blur(5px)",
-                  background: "linear-gradient(135deg, #3b82f6, #9333ea)",
-                  color: "gray",
-                  ":hover": {
-                    transform: "scale(1.05)",
-                    boxShadow: "0px 8px 16px rgba(0, 0, 0, 0.2)",
-                    borderColor: "#3b82f6",
-                    backdropFilter: "blur(10px)",
+          <div onClick={handleClick} style={{ display: "inline-block" }}>
+            <UserButton
+              appearance={{
+                elements: {
+                  userButtonPopoverCard: {
+                    pointerEvents: "initial",
+                    transition:
+                      "transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease",
+                    transform: "scale(1)",
+                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
+                    border: "2px solid transparent",
+                    backdropFilter: "blur(5px)",
+                    background: "linear-gradient(135deg, #3b82f6, #9333ea)",
+                    color: "gray",
+                    ":hover": {
+                      transform: "scale(1.05)",
+                      boxShadow: "0px 8px 16px rgba(0, 0, 0, 0.2)",
+                      borderColor: "#3b82f6",
+                      backdropFilter: "blur(10px)",
+                    },
                   },
                 },
-              },
-            }}
-          />
+              }}
+            />
+          </div>
         </div>
 
         <Separator />
 
         <Dialog
-          open={friendReqestModal}
-          onOpenChange={() => setFriendRequestModal(!friendReqestModal)}
+          open={friendRequestModal}
+          onOpenChange={() => setFriendRequestModal(!friendRequestModal)}
         >
           <DialogTrigger>
             <div className="flex items-center space-x-2">
